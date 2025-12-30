@@ -1,0 +1,9 @@
+{
+  "/favicon.ico/route": "app/favicon.ico/route.js",
+  "/api/stripe-checkout/route": "app/api/stripe-checkout/route.js",
+  "/page": "app/page.js",
+  "/record/page": "app/record/page.js",
+  "/dashboard/page": "app/dashboard/page.js",
+  "/auth/page": "app/auth/page.js",
+  "/pricing/page": "app/pricing/page.js"
+}

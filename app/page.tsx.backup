@@ -1,0 +1,256 @@
+import Link from 'next/link'
+
+export default function LandingPage() {
+  return (
+    <div className="min-h-screen bg-white">
+      {/* Hero Section - EXACT RevisionDojo Style */}
+      <section className="pt-24 pb-16 px-6 bg-gradient-to-br from-gray-50 via-blue-50/30 to-white">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid lg:grid-cols-2 gap-20 items-center">
+            <div className="space-y-6">
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-full text-sm font-medium border border-blue-100">
+                <span className="text-blue-600">🎓</span> Trusted by 25,000+ students worldwide
+              </div>
+              
+              <h1 className="text-6xl lg:text-7xl font-bold text-gray-900 leading-tight">
+                Turn lectures into <span className="text-blue-600">perfect study notes</span>
+              </h1>
+              
+              <p className="text-xl text-gray-600 leading-relaxed">
+                Record, transcribe, and generate AI study notes automatically. Never miss important information again.
+              </p>
+              
+              <div className="flex gap-4 pt-4">
+                <Link href="/auth" className="px-8 py-3.5 bg-gradient-to-r from-orange-500 to-red-500 text-white font-bold text-lg rounded-xl hover:shadow-xl transition-all">
+                  Open app →
+                </Link>
+                <Link href="#mission" className="px-8 py-3.5 bg-white text-gray-900 font-bold text-lg rounded-xl border-2 border-gray-200 hover:border-gray-300 transition-all">
+                  Meet Studly
+                </Link>
+              </div>
+            </div>
+
+            {/* 3D Book - Simplified */}
+            <div className="relative flex justify-center items-center">
+              <div className="relative w-[400px] h-[400px]" style={{ perspective: '1000px' }}>
+                <div 
+                  className="w-full h-full bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 rounded-[40px] shadow-2xl relative"
+                  style={{ transform: 'rotateY(-12deg) rotateX(5deg)', transformStyle: 'preserve-3d' }}
+                >
+                  {/* Book spine */}
+                  <div className="absolute left-0 inset-y-0 w-8 bg-blue-900/30 rounded-l-[40px]"></div>
+                  
+                  {/* Book pages */}
+                  <div className="absolute right-3 inset-y-8 w-3 bg-white/20 rounded-r-2xl"></div>
+                  
+                  {/* Logo & Face */}
+                  <div className="absolute inset-0 flex flex-col items-center justify-center">
+                    <div className="w-32 h-32 mb-8">
+                      <svg viewBox="0 0 200 200" className="w-full h-full text-white">
+                        <path fill="currentColor" d="M100 40 L160 70 L160 110 L145 118 L145 85 L100 62 L55 85 L55 118 L40 110 L40 70 Z M100 75 L130 90 L130 120 L100 135 L70 120 L70 90 Z" />
+                      </svg>
+                    </div>
+                    <div className="flex gap-4 mb-4">
+                      <div className="w-3 h-3 bg-white rounded-full"></div>
+                      <div className="w-3 h-3 bg-white rounded-full"></div>
+                    </div>
+                    <div className="w-12 h-6 border-b-[3px] border-white rounded-b-full"></div>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Floating icons */}
+              <div className="absolute top-8 right-12 w-14 h-14 bg-white rounded-xl shadow-lg flex items-center justify-center animate-bounce" style={{ animationDuration: '3s' }}>
+                <span className="text-2xl">⏰</span>
+              </div>
+              <div className="absolute bottom-16 left-4 w-14 h-14 bg-white rounded-xl shadow-lg flex items-center justify-center animate-bounce" style={{ animationDuration: '3s', animationDelay: '1s' }}>
+                <span className="text-2xl">📚</span>
+              </div>
+              <div className="absolute bottom-32 right-4 w-14 h-14 bg-white rounded-xl shadow-lg flex items-center justify-center animate-bounce" style={{ animationDuration: '3s', animationDelay: '0.5s' }}>
+                <span className="text-2xl">📖</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Trust Stats - EXACT style from Screenshot 2 */}
+      <section className="py-12 px-6 bg-white">
+        <div className="max-w-6xl mx-auto">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="bg-white rounded-2xl p-6 border border-gray-200 hover:shadow-md transition-all">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                  <span className="text-xl">📈</span>
+                </div>
+                <div className="text-3xl font-bold text-gray-900">25K+</div>
+              </div>
+              <p className="text-sm text-gray-600 leading-tight">students<br/>Across 23+ countries</p>
+            </div>
+
+            <div className="bg-white rounded-2xl p-6 border border-gray-200 hover:shadow-md transition-all">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
+                  <span className="text-xl">👥</span>
+                </div>
+                <div className="text-3xl font-bold text-gray-900">86%</div>
+              </div>
+              <p className="text-sm text-gray-600 leading-tight">Preferred this platform<br/>over traditional note-taking</p>
+            </div>
+
+            <div className="bg-white rounded-2xl p-6 border border-gray-200 hover:shadow-md transition-all">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                  <span className="text-xl">🧠</span>
+                </div>
+                <div className="text-3xl font-bold text-gray-900">92%</div>
+              </div>
+              <p className="text-sm text-gray-600 leading-tight">Experienced<br/>less exam stress</p>
+            </div>
+
+            <div className="bg-white rounded-2xl p-6 border border-gray-200 hover:shadow-md transition-all">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
+                  <span className="text-xl">🎯</span>
+                </div>
+                <div className="text-3xl font-bold text-gray-900">82%</div>
+              </div>
+              <p className="text-sm text-gray-600 leading-tight">Say studying<br/>is now enjoyable</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* How it works */}
+      <section id="how-it-works" className="py-20 px-6 bg-gradient-to-b from-white to-gray-50">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-5xl font-bold text-gray-900 mb-4">How it works</h2>
+            <p className="text-xl text-gray-600">Three simple steps to better grades</p>
+          </div>
+          
+          <div className="grid md:grid-cols-3 gap-8">
+            {[
+              { num: '1', title: 'Record', desc: 'Hit record during your lecture. Studly captures everything with crystal-clear audio.', icon: '🎙️', color: 'blue' },
+              { num: '2', title: 'Process', desc: 'AI transcribes and analyzes, identifying key concepts and important information.', icon: '⚡', color: 'purple' },
+              { num: '3', title: 'Study', desc: 'Get beautifully formatted notes, summaries, and flashcards ready for studying.', icon: '📖', color: 'orange' }
+            ].map((step, i) => (
+              <div key={i} className="bg-white rounded-2xl p-8 border border-gray-200 hover:shadow-lg transition-all">
+                <div className={`inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-${step.color}-500 to-${step.color}-600 rounded-2xl text-white text-2xl font-bold mb-6`}>
+                  {step.num}
+                </div>
+                <div className="text-4xl mb-4">{step.icon}</div>
+                <h3 className="text-2xl font-bold text-gray-900 mb-3">{step.title}</h3>
+                <p className="text-gray-600 leading-relaxed">{step.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Pricing */}
+      <section id="pricing" className="py-20 px-6 bg-white">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-5xl font-bold text-gray-900 mb-4">Choose your plan</h2>
+            <p className="text-xl text-gray-600">Start transforming your study experience today</p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
+            <div className="bg-white rounded-3xl p-8 border-2 border-gray-200 hover:shadow-xl transition-all">
+              <h3 className="text-2xl font-bold text-gray-900 text-center mb-4">Basic</h3>
+              <div className="text-center mb-8">
+                <span className="text-6xl font-bold text-gray-900">€19</span>
+                <span className="text-xl text-gray-500">.99</span>
+                <p className="text-gray-600 mt-1">/month</p>
+              </div>
+              <ul className="space-y-3 mb-8">
+                <li className="flex items-center gap-3 text-gray-700"><span className="text-green-500 text-lg">✓</span> 10 recordings/month</li>
+                <li className="flex items-center gap-3 text-gray-700"><span className="text-green-500 text-lg">✓</span> AI-generated notes</li>
+                <li className="flex items-center gap-3 text-gray-700"><span className="text-green-500 text-lg">✓</span> Basic summaries</li>
+              </ul>
+              <Link href="/pricing" className="block w-full py-3 bg-gray-900 text-white font-bold rounded-xl text-center hover:bg-gray-800 transition-all">
+                Get started
+              </Link>
+            </div>
+
+            <div className="bg-gradient-to-br from-blue-600 to-purple-600 rounded-3xl p-8 transform scale-105 shadow-2xl relative">
+              <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-5 py-1.5 bg-yellow-400 text-gray-900 font-bold rounded-full text-sm">
+                Most Popular
+              </div>
+              <h3 className="text-2xl font-bold text-white text-center mb-4">Premium</h3>
+              <div className="text-center mb-8">
+                <span className="text-6xl font-bold text-white">€29</span>
+                <span className="text-xl text-blue-100">.99</span>
+                <p className="text-blue-100 mt-1">/month</p>
+              </div>
+              <ul className="space-y-3 mb-8">
+                <li className="flex items-center gap-3 text-white"><span className="text-yellow-300 text-lg">✓</span> <strong>Unlimited recordings</strong></li>
+                <li className="flex items-center gap-3 text-white"><span className="text-yellow-300 text-lg">✓</span> Advanced AI notes</li>
+                <li className="flex items-center gap-3 text-white"><span className="text-yellow-300 text-lg">✓</span> Flashcards & quizzes</li>
+                <li className="flex items-center gap-3 text-white"><span className="text-yellow-300 text-lg">✓</span> Priority support</li>
+              </ul>
+              <Link href="/pricing" className="block w-full py-3 bg-white text-blue-600 font-bold rounded-xl text-center hover:bg-gray-50 transition-all">
+                Go Premium
+              </Link>
+            </div>
+
+            <div className="bg-white rounded-3xl p-8 border-2 border-purple-300 hover:shadow-xl transition-all">
+              <h3 className="text-2xl font-bold text-gray-900 text-center mb-4">Elite</h3>
+              <div className="text-center mb-8">
+                <span className="text-6xl font-bold text-gray-900">€39</span>
+                <span className="text-xl text-gray-500">.99</span>
+                <p className="text-gray-600 mt-1">/month</p>
+              </div>
+              <ul className="space-y-3 mb-8">
+                <li className="flex items-center gap-3 text-gray-700"><span className="text-purple-500 text-lg">✓</span> Everything in Premium</li>
+                <li className="flex items-center gap-3 text-gray-700"><span className="text-purple-500 text-lg">✓</span> Personal AI tutor</li>
+                <li className="flex items-center gap-3 text-gray-700"><span className="text-purple-500 text-lg">✓</span> Exam predictions</li>
+                <li className="flex items-center gap-3 text-gray-700"><span className="text-purple-500 text-lg">✓</span> 24/7 priority support</li>
+              </ul>
+              <Link href="/pricing" className="block w-full py-3 bg-gradient-to-r from-purple-500 to-purple-600 text-white font-bold rounded-xl text-center hover:shadow-xl transition-all">
+                Go Elite
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Mission */}
+      <section id="mission" className="py-24 px-6 bg-gradient-to-br from-slate-900 to-slate-800 text-white">
+        <div className="max-w-4xl mx-auto text-center">
+          <h2 className="text-5xl font-bold mb-6">Our Mission</h2>
+          <div className="w-20 h-1 bg-gradient-to-r from-blue-500 to-purple-500 mx-auto rounded-full mb-8"></div>
+          <p className="text-2xl text-gray-300 font-semibold mb-6">Built by students, for students.</p>
+          <p className="text-xl text-gray-400 leading-relaxed">
+            We believe every student deserves tools that adapt to how they actually learn—not the other way around. 
+            That's why we created Studly: a modern, AI-powered study system that transforms real learning moments into 
+            clear, structured, personalized study material automatically.
+          </p>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="py-12 px-6 bg-gray-900 text-white">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex flex-col items-center text-center space-y-6">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
+                <svg viewBox="0 0 40 40" className="w-7 h-7 text-white">
+                  <path fill="currentColor" d="M20 8 L32 14 L32 22 L29 24 L29 17 L20 12 L11 17 L11 24 L8 22 L8 14 Z M20 15 L26 18 L26 24 L20 27 L14 24 L14 18 Z" />
+                </svg>
+              </div>
+              <span className="text-2xl font-bold">Studly</span>
+            </div>
+            <p className="text-gray-400">© 2025 Studly. Empowering students to learn better.</p>
+            <div className="flex gap-6 text-gray-400 text-sm">
+              <Link href="#" className="hover:text-white transition-colors">Privacy</Link>
+              <Link href="#" className="hover:text-white transition-colors">Terms</Link>
+              <Link href="#" className="hover:text-white transition-colors">Contact</Link>
+            </div>
+          </div>
+        </div>
+      </footer>
+    </div>
+  )
+}

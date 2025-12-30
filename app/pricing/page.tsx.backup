@@ -1,0 +1,489 @@
+import Link from 'next/link';
+import { ArrowRight, CheckCircle, Mic, BookOpen, Zap, Brain, Users, TrendingUp, BarChart3, MessageCircle } from 'lucide-react';
+
+export default function LandingPage() {
+  return (
+    <div className="min-h-screen bg-white">
+      {/* Hero Section */}
+      <section className="relative px-6 pt-32 pb-24 overflow-hidden">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center max-w-4xl mx-auto">
+            {/* Headline */}
+            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-gray-900 leading-[1.1] tracking-tight mb-6">
+              Turn lectures into{' '}
+              <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                perfect study notes
+              </span>
+            </h1>
+            
+            {/* Subheadline */}
+            <p className="text-xl md:text-2xl text-gray-600 mb-12 leading-relaxed">
+              Record, transcribe, and generate AI study notes automatically. Never miss important information again.
+            </p>
+            
+            {/* CTA Buttons */}
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+              <Link
+                href="/auth"
+                className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold rounded-xl hover:shadow-2xl hover:scale-105 active:scale-97 transition-all duration-200"
+              >
+                Open app
+                <ArrowRight className="w-5 h-5" />
+              </Link>
+              
+              <Link
+                href="/auth"
+                className="inline-flex items-center gap-2 px-8 py-4 bg-white border-2 border-gray-300 text-gray-900 font-semibold rounded-xl hover:border-gray-400 hover:shadow-lg hover:scale-105 active:scale-97 transition-all duration-200"
+              >
+                Try Studly
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Trust Blocks */}
+      <section className="py-16 px-6 bg-gray-50">
+        <div className="max-w-6xl mx-auto">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {/* Stat 1 */}
+            <div className="bg-white p-8 rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="p-2 bg-blue-100 rounded-lg">
+                  <Users className="w-6 h-6 text-blue-600" />
+                </div>
+              </div>
+              <div className="text-3xl font-bold text-gray-900 mb-1">25,000+</div>
+              <p className="text-gray-600 text-sm">students — Across 23+ countries</p>
+            </div>
+
+            {/* Stat 2 */}
+            <div className="bg-white p-8 rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="p-2 bg-purple-100 rounded-lg">
+                  <TrendingUp className="w-6 h-6 text-purple-600" />
+                </div>
+              </div>
+              <div className="text-3xl font-bold text-gray-900 mb-1">86%</div>
+              <p className="text-gray-600 text-sm">preferred this platform over traditional note-taking</p>
+            </div>
+
+            {/* Stat 3 */}
+            <div className="bg-white p-8 rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="p-2 bg-green-100 rounded-lg">
+                  <BarChart3 className="w-6 h-6 text-green-600" />
+                </div>
+              </div>
+              <div className="text-3xl font-bold text-gray-900 mb-1">92%</div>
+              <p className="text-gray-600 text-sm">experienced less exam stress</p>
+            </div>
+
+            {/* Stat 4 */}
+            <div className="bg-white p-8 rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="p-2 bg-orange-100 rounded-lg">
+                  <MessageCircle className="w-6 h-6 text-orange-600" />
+                </div>
+              </div>
+              <div className="text-3xl font-bold text-gray-900 mb-1">82%</div>
+              <p className="text-gray-600 text-sm">say studying is now enjoyable</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* AI Study Partner Section */}
+      <section className="py-32 px-6 bg-gradient-to-br from-blue-900 via-blue-800 to-purple-900 text-white relative overflow-hidden">
+        <div className="max-w-6xl mx-auto">
+          <div className="grid lg:grid-cols-2 gap-16 items-center">
+            {/* Left: Copy */}
+            <div>
+              <h2 className="text-5xl md:text-6xl font-bold leading-tight mb-6">
+                Meet Studly,{' '}
+                <span className="text-blue-300">your AI study partner</span>
+              </h2>
+              
+              <p className="text-xl text-blue-100 mb-8 leading-relaxed">
+                Always available. Never judges. Learns how you learn.
+              </p>
+              
+              <div className="space-y-4 mb-8">
+                <div className="flex items-start gap-4">
+                  <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
+                    <CheckCircle className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold mb-1">24/7 availability</h3>
+                    <p className="text-gray-400">Studly never sleeps, never gets tired</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-start gap-4">
+                  <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center">
+                    <CheckCircle className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold mb-1">Personalized learning</h3>
+                    <p className="text-gray-400">Adapts to your unique study style</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-start gap-4">
+                  <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
+                    <CheckCircle className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold mb-1">Adaptive learning style</h3>
+                    <p className="text-gray-400">Studly adapts to how you study best</p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="pt-6">
+                <blockquote className="border-l-4 border-orange-500 pl-6 py-4 bg-white/5 backdrop-blur-sm rounded-r-xl">
+                  <p className="text-lg italic mb-2">
+                    "Stuck on a concept? I've got you — 24/7."
+                  </p>
+                  <footer className="text-sm text-gray-400">— Studly</footer>
+                </blockquote>
+              </div>
+              
+              <Link
+                href="/auth"
+                className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-orange-500 to-red-500 text-white font-bold rounded-xl hover:shadow-2xl hover:scale-105 active:scale-97 transition-all duration-200 mt-8"
+              >
+                Chat with Studly
+                <ArrowRight className="w-5 h-5" />
+              </Link>
+            </div>
+
+            {/* Right: Chat mockup */}
+            <div className="relative">
+              <div className="bg-white rounded-3xl shadow-2xl p-6 text-gray-900">
+                {/* Chat header */}
+                <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-200">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-800 rounded-xl flex items-center justify-center">
+                      <span className="text-white text-xl">📚</span>
+                    </div>
+                    <div>
+                      <h3 className="font-semibold">Studly</h3>
+                      <p className="text-xs text-gray-500">AI Study Partner</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <button className="px-3 py-1.5 bg-blue-100 text-blue-700 text-xs font-medium rounded-lg">
+                      Quiz
+                    </button>
+                    <button className="px-3 py-1.5 bg-gray-100 text-gray-700 text-xs font-medium rounded-lg">
+                      Search
+                    </button>
+                  </div>
+                </div>
+
+                {/* Chat messages */}
+                <div className="space-y-4">
+                  <div className="flex justify-end">
+                    <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-4 py-3 rounded-2xl rounded-tr-sm max-w-xs text-sm">
+                      Explain photosynthesis in simple terms
+                    </div>
+                  </div>
+                  
+                  <div className="flex justify-start">
+                    <div className="bg-gray-100 text-gray-900 px-4 py-3 rounded-2xl rounded-tl-sm max-w-sm">
+                      <p className="text-sm mb-3">
+                        Great question! Photosynthesis is how plants make their own food using sunlight. Here's the simple version:
+                      </p>
+                      <div className="space-y-2 text-xs">
+                        <div className="flex items-center gap-2">
+                          <div className="w-1.5 h-1.5 bg-blue-600 rounded-full"></div>
+                          <span>Plants take in CO₂ from air</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="w-1.5 h-1.5 bg-blue-600 rounded-full"></div>
+                          <span>Absorb water from roots</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="w-1.5 h-1.5 bg-blue-600 rounded-full"></div>
+                          <span>Use sunlight as energy</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="w-1.5 h-1.5 bg-orange-500 rounded-full"></div>
+                          <span className="font-medium">= Glucose (food) + O₂</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* How It Works */}
+      <section className="py-32 px-6">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-20">
+            <h2 className="text-5xl font-bold text-gray-900 mb-4">
+              How it works
+            </h2>
+            <p className="text-xl text-gray-600">
+              Three simple steps to better grades
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-12">
+            <div className="relative">
+              <div className="absolute -top-6 -left-6 text-8xl font-bold text-blue-100">1</div>
+              <div className="relative bg-white p-8 rounded-2xl border border-gray-200 shadow-sm">
+                <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center mb-6">
+                  <BookOpen className="w-7 h-7 text-white" />
+                </div>
+                <h3 className="text-2xl font-bold text-gray-900 mb-3">Record your lecture</h3>
+                <p className="text-gray-600 leading-relaxed">
+                  One click. No setup. Crystal clear audio optimized for learning.
+                </p>
+              </div>
+            </div>
+
+            <div className="relative">
+              <div className="absolute -top-6 -left-6 text-8xl font-bold text-blue-100">2</div>
+              <div className="relative bg-white p-8 rounded-2xl border border-gray-200 shadow-sm">
+                <div className="w-14 h-14 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center mb-6">
+                  <Zap className="w-7 h-7 text-white" />
+                </div>
+                <h3 className="text-2xl font-bold text-gray-900 mb-3">AI processes everything</h3>
+                <p className="text-gray-600 leading-relaxed">
+                  Transcription, structure, summaries — all automatic in seconds.
+                </p>
+              </div>
+            </div>
+
+            <div className="relative">
+              <div className="absolute -top-6 -left-6 text-8xl font-bold text-blue-100">3</div>
+              <div className="relative bg-white p-8 rounded-2xl border border-gray-200 shadow-sm">
+                <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center mb-6">
+                  <Brain className="w-7 h-7 text-white" />
+                </div>
+                <h3 className="text-2xl font-bold text-gray-900 mb-3">Study smarter</h3>
+                <p className="text-gray-600 leading-relaxed">
+                  Chat with Studly, generate quizzes, ace your exams.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Pricing Section */}
+      <section className="py-32 px-6 bg-gray-50">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-5xl font-bold text-gray-900 mb-4">
+              Choose your plan
+            </h2>
+            <p className="text-xl text-gray-600">
+              Select the plan that fits your study needs
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            {/* Plan 1 - Basic */}
+            <div className="bg-white p-8 rounded-3xl border border-gray-200 shadow-sm hover:shadow-lg transition-all duration-200">
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-2xl font-bold text-gray-900 mb-2">Basic</h3>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-5xl font-bold text-gray-900">€19.99</span>
+                    <span className="text-xl text-gray-600">/month</span>
+                  </div>
+                </div>
+
+                <ul className="space-y-4">
+                  <li className="flex items-center gap-3 text-gray-700">
+                    <CheckCircle className="w-5 h-5 text-blue-600 flex-shrink-0" />
+                    <span>Limited recordings</span>
+                  </li>
+                  <li className="flex items-center gap-3 text-gray-700">
+                    <CheckCircle className="w-5 h-5 text-blue-600 flex-shrink-0" />
+                    <span>Limited AI chat & feedback</span>
+                  </li>
+                  <li className="flex items-center gap-3 text-gray-700">
+                    <CheckCircle className="w-5 h-5 text-blue-600 flex-shrink-0" />
+                    <span>AI-generated study notes</span>
+                  </li>
+                  <li className="flex items-center gap-3 text-gray-300">
+                    <CheckCircle className="w-5 h-5 text-gray-300 flex-shrink-0" />
+                    <span className="line-through">Flashcards</span>
+                  </li>
+                  <li className="flex items-center gap-3 text-gray-300">
+                    <CheckCircle className="w-5 h-5 text-gray-300 flex-shrink-0" />
+                    <span className="line-through">Advanced AI explanations</span>
+                  </li>
+                </ul>
+
+                <Link
+                  href="/auth"
+                  className="block w-full text-center px-6 py-4 bg-gray-100 text-gray-900 font-semibold rounded-xl hover:bg-gray-200 hover:scale-105 active:scale-97 transition-all duration-200"
+                >
+                  Get Started
+                </Link>
+              </div>
+            </div>
+
+            {/* Plan 2 - Pro (Most Popular) */}
+            <div className="relative p-8 rounded-3xl bg-gradient-to-br from-blue-600 to-purple-600 text-white shadow-2xl hover:shadow-3xl transform scale-105 transition-all duration-200">
+              <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1.5 bg-orange-400 text-gray-900 text-sm font-bold rounded-full">
+                🔥 Most Popular
+              </div>
+
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-2xl font-bold mb-2">Pro</h3>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-5xl font-bold">€29.99</span>
+                    <span className="text-xl opacity-90">/month</span>
+                  </div>
+                </div>
+
+                <ul className="space-y-4">
+                  <li className="flex items-center gap-3">
+                    <CheckCircle className="w-5 h-5 flex-shrink-0" />
+                    <span>Unlimited recordings</span>
+                  </li>
+                  <li className="flex items-center gap-3">
+                    <CheckCircle className="w-5 h-5 flex-shrink-0" />
+                    <span>Unlimited study notes</span>
+                  </li>
+                  <li className="flex items-center gap-3">
+                    <CheckCircle className="w-5 h-5 flex-shrink-0" />
+                    <span>Flashcards</span>
+                  </li>
+                  <li className="flex items-center gap-3">
+                    <CheckCircle className="w-5 h-5 flex-shrink-0" />
+                    <span>Unlimited AI chat & feedback</span>
+                  </li>
+                </ul>
+
+                <Link
+                  href="/auth"
+                  className="block w-full text-center px-6 py-4 bg-white text-blue-600 font-semibold rounded-xl hover:bg-gray-50 hover:scale-105 active:scale-97 transition-all duration-200"
+                >
+                  Start Free Trial →
+                </Link>
+              </div>
+            </div>
+
+            {/* Plan 3 - Elite */}
+            <div className="bg-white p-8 rounded-3xl border-2 border-purple-600 shadow-sm hover:shadow-lg transition-all duration-200">
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-2xl font-bold text-gray-900 mb-2">Elite</h3>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-5xl font-bold text-gray-900">€39.99</span>
+                    <span className="text-xl text-gray-600">/month</span>
+                  </div>
+                </div>
+
+                <div className="text-sm font-semibold text-purple-600 mb-4">
+                  Everything in Plan 2 +
+                </div>
+
+                <ul className="space-y-4">
+                  <li className="flex items-center gap-3 text-gray-700">
+                    <CheckCircle className="w-5 h-5 text-purple-600 flex-shrink-0" />
+                    <span>Advanced AI explanations</span>
+                  </li>
+                  <li className="flex items-center gap-3 text-gray-700">
+                    <CheckCircle className="w-5 h-5 text-purple-600 flex-shrink-0" />
+                    <span>Plagiarism & AI detection</span>
+                  </li>
+                  <li className="flex items-center gap-3 text-gray-700">
+                    <CheckCircle className="w-5 h-5 text-purple-600 flex-shrink-0" />
+                    <span>IA / EE feedback</span>
+                  </li>
+                  <li className="flex items-center gap-3 text-gray-700">
+                    <CheckCircle className="w-5 h-5 text-purple-600 flex-shrink-0" />
+                    <span>Access to paid tutoring</span>
+                  </li>
+                  <li className="flex items-center gap-3 text-gray-700">
+                    <CheckCircle className="w-5 h-5 text-purple-600 flex-shrink-0" />
+                    <span>Unlimited recordings & notes</span>
+                  </li>
+                </ul>
+
+                <Link
+                  href="/auth"
+                  className="block w-full text-center px-6 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-xl hover:shadow-lg hover:scale-105 active:scale-97 transition-all duration-200"
+                >
+                  Go Elite
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Mission Section */}
+      <section className="py-32 px-6 bg-gradient-to-br from-gray-900 to-gray-800 text-white">
+        <div className="max-w-4xl mx-auto text-center">
+          <h2 className="text-4xl md:text-5xl font-bold mb-8">
+            Built by students, for students
+          </h2>
+          
+          <div className="space-y-6 text-lg md:text-xl text-gray-300 leading-relaxed">
+            <p>
+              Education shouldn't be one-size-fits-all. Every student learns differently, at their own pace, with their own style.
+            </p>
+            
+            <p>
+              Traditional note-taking and study methods hold brilliant minds back. We believe inspiration leads to performance — and learning should be as unique as you are.
+            </p>
+            
+            <p>
+              That's why we created Studly. A tool that adapts to you, not the other way around. Because when education fits your needs, there's no limit to what you can achieve.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer Trust Line */}
+      <section className="py-12 px-6 bg-gray-50 border-t border-gray-200">
+        <div className="max-w-4xl mx-auto text-center">
+          <p className="text-2xl font-bold text-gray-900">
+            25,000 students can't be wrong.{' '}
+            <Link href="/auth" className="text-blue-600 hover:text-blue-700 transition-colors">
+              Join them now.
+            </Link>
+          </p>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="bg-gray-900 text-white py-12">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-6">
+            <div className="flex items-center gap-2">
+              <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-800 rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold">S</span>
+              </div>
+              <span className="text-xl font-bold">Studly</span>
+            </div>
+            
+            <div className="flex gap-8 text-sm text-gray-400">
+              <Link href="#" className="hover:text-white transition-colors">Privacy</Link>
+              <Link href="#" className="hover:text-white transition-colors">Terms</Link>
+              <Link href="#" className="hover:text-white transition-colors">Contact</Link>
+            </div>
+          </div>
+          
+          <div className="text-center mt-6 text-sm text-gray-500">
+            © 2025 Studly. Empowering students to learn better.
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
+}

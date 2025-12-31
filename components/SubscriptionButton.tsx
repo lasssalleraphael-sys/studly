@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState } from 'react';
-import { loadStripe } from '@stripe/stripe-js';
 import { Session } from '@supabase/supabase-js';
 
 interface SubscriptionButtonProps {
@@ -9,8 +8,6 @@ interface SubscriptionButtonProps {
   priceId: string;
   buttonText: string;
 }
-
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
 const SubscriptionButton: React.FC<SubscriptionButtonProps> = ({ session, priceId, buttonText }) => {
   const [isLoading, setIsLoading] = useState(false);
@@ -24,26 +21,25 @@ const SubscriptionButton: React.FC<SubscriptionButtonProps> = ({ session, priceI
     setIsLoading(true);
 
     try {
-      const response = await fetch('/api/create-checkout-session', {
+      const response = await fetch('/api/stripe-checkout', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           priceId: priceId,
-          customerEmail: session.user.email,
+          planName: 'subscription',
         }),
       });
 
-      const { sessionId } = await response.json();
-      const stripe = await stripePromise;
+      const { url, error } = await response.json();
+      
+      if (error) {
+        throw new Error(error);
+      }
 
-      if (stripe) {
-        const { error } = await stripe.redirectToCheckout({ sessionId });
-        if (error) {
-          console.error('Stripe checkout error:', error);
-          alert(error.message);
-        }
+      if (url) {
+        window.location.href = url;
       }
     } catch (error) {
       console.error('Error creating checkout session:', error);

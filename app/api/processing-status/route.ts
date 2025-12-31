@@ -1,16 +1,9 @@
-import { NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
+import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
+import { cookies } from 'next/headers'
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url)
-    const jobId = searchParams.get('jobId')
-
-    if (!jobId) {
-      return NextResponse.json({ error: 'Job ID is required' }, { status: 400 })
-    }
-
     const cookieStore = await cookies()
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -20,7 +13,7 @@ export async function GET(request: Request) {
           getAll() {
             return cookieStore.getAll()
           },
-          setAll(cookiesToSet) {
+          setAll(cookiesToSet: { name: string; value: string; options?: any }[]) {
             try {
               cookiesToSet.forEach(({ name, value, options }) =>
                 cookieStore.set(name, value, options)
@@ -33,13 +26,18 @@ export async function GET(request: Request) {
       }
     )
 
-    // Verify authentication
     const { data: { session } } = await supabase.auth.getSession()
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Get job status
+    const searchParams = request.nextUrl.searchParams
+    const jobId = searchParams.get('jobId')
+
+    if (!jobId) {
+      return NextResponse.json({ error: 'Missing jobId' }, { status: 400 })
+    }
+
     const { data: job, error } = await supabase
       .from('processing_jobs')
       .select('*')
@@ -51,7 +49,6 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Job not found' }, { status: 404 })
     }
 
-    // If completed, get the study notes
     let result = null
     if (job.status === 'completed' && job.result_id) {
       const { data: notes } = await supabase
@@ -65,14 +62,12 @@ export async function GET(request: Request) {
 
     return NextResponse.json({
       status: job.status,
-      step: job.step,
       result,
       error: job.error,
       createdAt: job.created_at,
       completedAt: job.completed_at,
     })
-
-  } catch (error: any) {
+  } catch (error) {
     console.error('Status check error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }

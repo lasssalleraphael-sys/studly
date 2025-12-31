@@ -1,34 +1,47 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { NextRequest, NextResponse } from 'next/server'
 
 export async function POST(req: NextRequest) {
-  const { transcriptionText } = await req.json();
+  const { transcriptionText } = await req.json()
 
   if (!transcriptionText) {
-    return NextResponse.json({ error: 'Missing transcription text' }, { status: 400 });
+    return NextResponse.json({ error: 'Missing transcription text' }, { status: 400 })
   }
 
   try {
-    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY as string);
-    const model = genAI.getGenerativeModel({ model: "gemini-pro"});
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.GROQ_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'llama-3.3-70b-versatile',
+        messages: [
+          {
+            role: 'system',
+            content: 'You are a study assistant. Generate structured notes from lecture transcriptions. Return JSON with keys: summary (string), mainPoints (array of strings), actionItems (array of strings), flashcards (array of {front, back} objects).'
+          },
+          {
+            role: 'user',
+            content: `Generate study notes from this transcription:\n\n${transcriptionText}`
+          }
+        ],
+        temperature: 0.3,
+        response_format: { type: 'json_object' }
+      }),
+    })
 
-    const prompt = `Given the following transcription, generate a concise summary, a list of main points, and a list of action items. Format the output as a JSON object with the keys 'summary' (string), 'mainPoints' (array of strings), and 'actionItems' (array of strings). Do not include any other text or formatting outside the JSON object.\n\nTranscription:\n\n${transcriptionText}`;
-
-    const result = await model.generateContent(prompt);
-    const response = result.response;
-    const content = response.text();
+    const data = await response.json()
+    const content = data.choices[0]?.message?.content
 
     if (!content) {
-      throw new Error('No content received from Google Gemini');
+      throw new Error('No content received from Groq')
     }
 
-    // Attempt to parse the content as JSON
-    const parsedContent = JSON.parse(content);
-
-    return NextResponse.json(parsedContent, { status: 200 });
+    const parsedContent = JSON.parse(content)
+    return NextResponse.json(parsedContent, { status: 200 })
   } catch (error) {
-    console.error('Google Gemini API error:', error);
-    return NextResponse.json({ error: 'Failed to generate notes' }, { status: 500 });
+    console.error('Groq API error:', error)
+    return NextResponse.json({ error: 'Failed to generate notes' }, { status: 500 })
   }
 }
-

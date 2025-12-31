@@ -1,18 +1,9 @@
-// app/api/upload-audio/route.ts
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
-    const formData = await request.formData()
-    const audioFile = formData.get('audio') as File
-    const title = formData.get('title') as string || 'Untitled Recording'
-
-    if (!audioFile) {
-      return NextResponse.json({ error: 'No audio file provided' }, { status: 400 })
-    }
-
     const cookieStore = await cookies()
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -22,7 +13,7 @@ export async function POST(request: Request) {
           getAll() {
             return cookieStore.getAll()
           },
-          setAll(cookiesToSet) {
+          setAll(cookiesToSet: { name: string; value: string; options?: any }[]) {
             try {
               cookiesToSet.forEach(({ name, value, options }) =>
                 cookieStore.set(name, value, options)
@@ -35,21 +26,25 @@ export async function POST(request: Request) {
       }
     )
 
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-    
-    if (authError || !user) {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const timestamp = Date.now()
-    const filename = `${user.id}/${timestamp}.webm`
+    const formData = await request.formData()
+    const audioFile = formData.get('audio') as File
+    const duration = parseInt(formData.get('duration') as string) || 0
 
-    const arrayBuffer = await audioFile.arrayBuffer()
-    const buffer = Buffer.from(arrayBuffer)
+    if (!audioFile) {
+      return NextResponse.json({ error: 'Missing audio file' }, { status: 400 })
+    }
+
+    const timestamp = Date.now()
+    const filename = `${session.user.id}/${timestamp}.webm`
 
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from('recordings')
-      .upload(filename, buffer, {
+      .upload(filename, audioFile, {
         contentType: 'audio/webm',
         upsert: false,
       })
@@ -66,12 +61,12 @@ export async function POST(request: Request) {
     const { data: recording, error: dbError } = await supabase
       .from('recordings')
       .insert({
-        user_id: user.id,
-        title: title,
+        user_id: session.user.id,
         audio_url: publicUrl,
         filename: filename,
-        file_size: audioFile.size,
+        duration: duration,
         status: 'uploaded',
+        created_at: new Date().toISOString(),
       })
       .select()
       .single()
@@ -81,16 +76,13 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Failed to save recording' }, { status: 500 })
     }
 
-    console.log('Recording uploaded:', recording.id)
-
     return NextResponse.json({
       success: true,
       recordingId: recording.id,
       audioUrl: publicUrl,
     })
-
-  } catch (error: any) {
+  } catch (error) {
     console.error('Upload error:', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

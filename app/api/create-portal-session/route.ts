@@ -9,8 +9,6 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 
 export async function POST(request: Request) {
   try {
-    const { priceId, planName } = await request.json()
-
     const cookieStore = await cookies()
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -39,47 +37,24 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    let customerId: string | undefined
-
-    const { data: existingCustomer } = await supabase
+    const { data: customer } = await supabase
       .from('customers')
       .select('stripe_customer_id')
       .eq('user_id', session.user.id)
       .single()
 
-    if (existingCustomer?.stripe_customer_id) {
-      customerId = existingCustomer.stripe_customer_id
-    } else {
-      const customer = await stripe.customers.create({
-        email: session.user.email,
-        metadata: {
-          supabase_user_id: session.user.id,
-        },
-      })
-
-      customerId = customer.id
-
-      await supabase.from('customers').insert({
-        user_id: session.user.id,
-        stripe_customer_id: customer.id,
-      })
+    if (!customer?.stripe_customer_id) {
+      return NextResponse.json({ error: 'No customer found' }, { status: 404 })
     }
 
-    const checkoutSession = await stripe.checkout.sessions.create({
-      customer: customerId,
-      line_items: [{ price: priceId, quantity: 1 }],
-      mode: 'subscription',
-      success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/dashboard?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/pricing`,
-      metadata: {
-        user_id: session.user.id,
-        plan_name: planName,
-      },
+    const portalSession = await stripe.billingPortal.sessions.create({
+      customer: customer.stripe_customer_id,
+      return_url: `${process.env.NEXT_PUBLIC_SITE_URL}/settings`,
     })
 
-    return NextResponse.json({ url: checkoutSession.url })
+    return NextResponse.json({ url: portalSession.url })
   } catch (error: any) {
-    console.error('Stripe checkout error:', error)
+    console.error('Portal session error:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }

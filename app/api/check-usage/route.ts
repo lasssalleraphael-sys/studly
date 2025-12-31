@@ -2,44 +2,49 @@ import { NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 
-const PLAN_LIMITS: Record<string, number> = {
-  starter: 7,
-  pro: 18,
-  elite: 37,
-  basic: 7,
-}
-
 export async function GET() {
   try {
-    const cookieStore = cookies()
+    const cookieStore = await cookies()
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
       {
         cookies: {
-          get(name: string) {
-            return cookieStore.get(name)?.value
+          getAll() {
+            return cookieStore.getAll()
+          },
+          setAll(cookiesToSet) {
+            try {
+              cookiesToSet.forEach(({ name, value, options }) =>
+                cookieStore.set(name, value, options)
+              )
+            } catch {
+              // Ignore
+            }
           },
         },
       }
     )
 
     const { data: { session } } = await supabase.auth.getSession()
+
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Get user's subscription plan
+    // Get user's subscription
     const { data: subscription } = await supabase
       .from('subscriptions')
-      .select('plan_name')
+      .select('plan_name, status')
       .eq('user_id', session.user.id)
+      .in('status', ['active', 'trialing'])
       .single()
 
-    const planName = subscription?.plan_name || 'starter'
-    const planLimit = PLAN_LIMITS[planName.toLowerCase()] || 7
+    if (!subscription) {
+      return NextResponse.json({ error: 'No active subscription' }, { status: 403 })
+    }
 
-    // Count recordings this month
+    // Get usage for current month
     const startOfMonth = new Date()
     startOfMonth.setDate(1)
     startOfMonth.setHours(0, 0, 0, 0)
@@ -50,19 +55,24 @@ export async function GET() {
       .eq('user_id', session.user.id)
       .gte('created_at', startOfMonth.toISOString())
 
+    // Plan limits (in hours)
+    const planLimits: Record<string, number> = {
+      starter: 7,
+      pro: 18,
+      elite: 37
+    }
+
+    const limit = planLimits[subscription.plan_name.toLowerCase()] || 7
     const used = count || 0
-    const remaining = Math.max(0, planLimit - used)
-    const canRecord = used < planLimit
 
     return NextResponse.json({
-      planName,
-      planLimit,
       used,
-      remaining,
-      canRecord,
+      limit,
+      remaining: Math.max(0, limit - used),
+      plan: subscription.plan_name
     })
   } catch (error: any) {
-    console.error('Usage check error:', error)
+    console.error('Check usage error:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }

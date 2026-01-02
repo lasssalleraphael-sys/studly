@@ -1,7 +1,7 @@
 'use client'
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
-import { Mic, Square, Upload, CheckCircle, AlertCircle, ArrowLeft } from 'lucide-react'
+import { Mic, Square, Upload, CheckCircle, AlertCircle, ArrowLeft, Loader } from 'lucide-react'
 import Link from 'next/link'
 
 const PLAN_LIMITS: Record<string, number> = {
@@ -11,26 +11,94 @@ const PLAN_LIMITS: Record<string, number> = {
   basic: 7,
 }
 
+const SUBJECTS = [
+  { value: '', label: 'Select subject (optional)' },
+  { value: 'biology', label: 'Biology' },
+  { value: 'chemistry', label: 'Chemistry' },
+  { value: 'physics', label: 'Physics' },
+  { value: 'maths', label: 'Mathematics' },
+  { value: 'history', label: 'History' },
+  { value: 'english', label: 'English' },
+  { value: 'economics', label: 'Economics' },
+  { value: 'psychology', label: 'Psychology' },
+  { value: 'geography', label: 'Geography' },
+  { value: 'computer_science', label: 'Computer Science' },
+  { value: 'other', label: 'Other' },
+]
+
+const EXAM_BOARDS = [
+  { value: '', label: 'Select exam board (optional)' },
+  { value: 'IB', label: 'IB (International Baccalaureate)' },
+  { value: 'A-Level', label: 'A-Level' },
+  { value: 'GCSE', label: 'GCSE' },
+  { value: 'AP', label: 'AP (Advanced Placement)' },
+  { value: 'other', label: 'Other' },
+]
+
 export default function RecordPage() {
   const [isRecording, setIsRecording] = useState(false)
   const [isProcessing, setIsProcessing] = useState(false)
+  const [processingStep, setProcessingStep] = useState('')
   const [recordingTime, setRecordingTime] = useState(0)
   const [error, setError] = useState('')
   const [title, setTitle] = useState('')
-  
-  const [monthlyUsage, setMonthlyUsage] = useState(0)
-  const [planLimit, setPlanLimit] = useState(7)
+  const [subject, setSubject] = useState('')
+  const [examBoard, setExamBoard] = useState('')
+  const [currentRecordingId, setCurrentRecordingId] = useState<string | null>(null)
+
+  const [hoursUsed, setHoursUsed] = useState(0)
+  const [hoursLimit, setHoursLimit] = useState(7)
   const [planName, setPlanName] = useState('starter')
   const [checkingUsage, setCheckingUsage] = useState(true)
-  
+
   const mediaRecorder = useRef<MediaRecorder | null>(null)
   const audioChunks = useRef<Blob[]>([])
   const timerInterval = useRef<NodeJS.Timeout | null>(null)
+  const pollingInterval = useRef<NodeJS.Timeout | null>(null)
 
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   )
+
+  const pollProcessingStatus = useCallback(async (recordingId: string) => {
+    try {
+      const response = await fetch(`/api/processing-status?recordingId=${recordingId}`)
+      if (!response.ok) {
+        throw new Error('Failed to check processing status')
+      }
+
+      const data = await response.json()
+
+      if (data.status === 'completed') {
+        if (pollingInterval.current) {
+          clearInterval(pollingInterval.current)
+        }
+        window.location.href = `/notes/${recordingId}`
+        return
+      }
+
+      if (data.status === 'failed') {
+        if (pollingInterval.current) {
+          clearInterval(pollingInterval.current)
+        }
+        setError(data.error || 'Processing failed. Please try again.')
+        setIsProcessing(false)
+        return
+      }
+
+      // Update step message
+      if (data.step === 'transcription') {
+        setProcessingStep('Transcribing audio...')
+      } else if (data.step === 'note_generation') {
+        setProcessingStep('Generating study notes...')
+      } else {
+        setProcessingStep('Processing...')
+      }
+    } catch (err) {
+      console.error('Polling error:', err)
+    }
+  }, [])
 
   useEffect(() => {
     const checkUsage = async () => {
@@ -43,26 +111,17 @@ export default function RecordPage() {
 
         const { data: sub } = await supabase
           .from('subscriptions')
-          .select('plan_name')
+          .select('plan_name, hours_used, monthly_hours_limit')
           .eq('user_id', session.user.id)
           .single()
 
         const userPlanName = sub?.plan_name || 'starter'
-        const userPlanLimit = PLAN_LIMITS[userPlanName.toLowerCase()] || 7
-        setPlanName(userPlanName)
-        setPlanLimit(userPlanLimit)
+        const userHoursLimit = sub?.monthly_hours_limit || PLAN_LIMITS[userPlanName.toLowerCase()] || 7
+        const userHoursUsed = sub?.hours_used || 0
 
-        const startOfMonth = new Date()
-        startOfMonth.setDate(1)
-        startOfMonth.setHours(0, 0, 0, 0)
-        
-        const { count } = await supabase
-          .from('recordings')
-          .select('*', { count: 'exact', head: true })
-          .eq('user_id', session.user.id)
-          .gte('created_at', startOfMonth.toISOString())
-        
-        setMonthlyUsage(count || 0)
+        setPlanName(userPlanName)
+        setHoursLimit(userHoursLimit)
+        setHoursUsed(userHoursUsed)
       } catch (err) {
         console.error('Error checking usage:', err)
       } finally {
@@ -76,11 +135,14 @@ export default function RecordPage() {
       if (timerInterval.current) {
         clearInterval(timerInterval.current)
       }
+      if (pollingInterval.current) {
+        clearInterval(pollingInterval.current)
+      }
     }
   }, [])
 
-  const isAtLimit = monthlyUsage >= planLimit
-  const remaining = Math.max(0, planLimit - monthlyUsage)
+  const isAtLimit = hoursUsed >= hoursLimit
+  const remainingHours = Math.max(0, hoursLimit - hoursUsed)
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60)
@@ -88,9 +150,16 @@ export default function RecordPage() {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
   }
 
+  const formatHours = (hours: number) => {
+    if (hours < 1) {
+      return `${Math.round(hours * 60)} minutes`
+    }
+    return `${hours.toFixed(1)} hours`
+  }
+
   const startRecording = async () => {
     if (isAtLimit) {
-      setError('You have reached your monthly recording limit. Please upgrade your plan or wait until next month.')
+      setError('You have reached your monthly hours limit. Please upgrade your plan or wait until next month.')
       return
     }
 
@@ -112,7 +181,7 @@ export default function RecordPage() {
       mediaRecorder.current.start()
       setIsRecording(true)
       setRecordingTime(0)
-      
+
       timerInterval.current = setInterval(() => {
         setRecordingTime(prev => prev + 1)
       }, 1000)
@@ -127,12 +196,13 @@ export default function RecordPage() {
       mediaRecorder.current.stop()
       mediaRecorder.current.stream.getTracks().forEach(track => track.stop())
       setIsRecording(false)
-      
+
       if (timerInterval.current) {
         clearInterval(timerInterval.current)
       }
-      
+
       setIsProcessing(true)
+      setProcessingStep('Uploading recording...')
     }
   }
 
@@ -145,18 +215,10 @@ export default function RecordPage() {
         return
       }
 
-      const startOfMonth = new Date()
-      startOfMonth.setDate(1)
-      startOfMonth.setHours(0, 0, 0, 0)
-      
-      const { count } = await supabase
-        .from('recordings')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', session.user.id)
-        .gte('created_at', startOfMonth.toISOString())
-
-      if ((count || 0) >= planLimit) {
-        setError('Monthly limit reached. Please upgrade your plan.')
+      // Check if adding this recording would exceed the limit
+      const recordingHours = recordingTime / 3600
+      if ((hoursUsed + recordingHours) > hoursLimit) {
+        setError('This recording would exceed your monthly limit. Please upgrade your plan.')
         setIsProcessing(false)
         return
       }
@@ -177,11 +239,16 @@ export default function RecordPage() {
           status: 'pending',
           file_size: audioBlob.size,
           duration: recordingTime,
+          subject: subject || null,
+          exam_board: examBoard || null,
         })
         .select()
         .single()
 
       if (recordingError) throw recordingError
+
+      setCurrentRecordingId(recording.id)
+      setProcessingStep('Starting transcription...')
 
       const response = await fetch('/api/process-recording', {
         method: 'POST',
@@ -189,12 +256,22 @@ export default function RecordPage() {
         body: JSON.stringify({ recordingId: recording.id }),
       })
 
-      if (!response.ok) throw new Error('Processing failed to start')
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Processing failed to start')
+      }
 
-      window.location.href = '/dashboard?success=recording-uploaded'
-    } catch (err: any) {
+      // Start polling for status
+      pollingInterval.current = setInterval(() => {
+        pollProcessingStatus(recording.id)
+      }, 3000)
+
+      // Also do an immediate poll
+      pollProcessingStatus(recording.id)
+
+    } catch (err: unknown) {
       console.error('Upload error:', err)
-      setError(err.message || 'Failed to upload recording')
+      setError(err instanceof Error ? err.message : 'Failed to upload recording')
       setIsProcessing(false)
     }
   }
@@ -220,20 +297,20 @@ export default function RecordPage() {
             </div>
             <h1 className="text-3xl font-bold text-gray-900 mb-3">Monthly limit reached</h1>
             <p className="text-gray-600 mb-2">
-              You've used all <strong>{planLimit} recordings</strong> included in your <span className="capitalize">{planName}</span> plan this month.
+              You've used all <strong>{formatHours(hoursLimit)}</strong> included in your <span className="capitalize">{planName}</span> plan this month.
             </p>
             <p className="text-gray-500 text-sm mb-8">
               Your limit resets on the 1st of next month.
             </p>
-            
+
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link 
+              <Link
                 href="/pricing"
                 className="px-8 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors"
               >
                 Upgrade plan
               </Link>
-              <Link 
+              <Link
                 href="/dashboard"
                 className="px-8 py-3 bg-gray-100 text-gray-900 font-semibold rounded-lg hover:bg-gray-200 transition-colors flex items-center justify-center gap-2"
               >
@@ -256,7 +333,7 @@ export default function RecordPage() {
             Click the button below to start recording. We'll handle the rest.
           </p>
           <p className="text-sm text-blue-600 mt-2 font-medium">
-            {remaining} recording{remaining !== 1 ? 's' : ''} remaining this month
+            {formatHours(remainingHours)} remaining this month
           </p>
         </div>
 
@@ -268,18 +345,54 @@ export default function RecordPage() {
         )}
 
         {!isRecording && !isProcessing && (
-          <div className="mb-6">
-            <label htmlFor="title" className="block text-sm font-semibold text-gray-900 mb-2">
-              Recording title (optional)
-            </label>
-            <input
-              id="title"
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="e.g., Biology Lecture - Chapter 3"
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent outline-none transition-all"
-            />
+          <div className="space-y-4 mb-6">
+            <div>
+              <label htmlFor="title" className="block text-sm font-semibold text-gray-900 mb-2">
+                Recording title (optional)
+              </label>
+              <input
+                id="title"
+                type="text"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="e.g., Biology Lecture - Chapter 3"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent outline-none transition-all"
+              />
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="subject" className="block text-sm font-semibold text-gray-900 mb-2">
+                  Subject
+                </label>
+                <select
+                  id="subject"
+                  value={subject}
+                  onChange={(e) => setSubject(e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent outline-none transition-all bg-white"
+                >
+                  {SUBJECTS.map((s) => (
+                    <option key={s.value} value={s.value}>{s.label}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label htmlFor="examBoard" className="block text-sm font-semibold text-gray-900 mb-2">
+                  Exam Board
+                </label>
+                <select
+                  id="examBoard"
+                  value={examBoard}
+                  onChange={(e) => setExamBoard(e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent outline-none transition-all bg-white"
+                >
+                  {EXAM_BOARDS.map((e) => (
+                    <option key={e.value} value={e.value}>{e.label}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
           </div>
         )}
 
@@ -317,10 +430,15 @@ export default function RecordPage() {
           {isProcessing && (
             <div>
               <div className="w-32 h-32 bg-blue-100 rounded-full mx-auto mb-6 flex items-center justify-center">
-                <Upload className="w-14 h-14 text-blue-600 animate-bounce" strokeWidth={2} />
+                <Loader className="w-14 h-14 text-blue-600 animate-spin" strokeWidth={2} />
               </div>
-              <p className="text-xl font-bold text-gray-900 mb-2">Uploading recording...</p>
-              <p className="text-sm text-gray-600">This may take a moment</p>
+              <p className="text-xl font-bold text-gray-900 mb-2">{processingStep || 'Processing...'}</p>
+              <p className="text-sm text-gray-600">This usually takes 1-2 minutes</p>
+              {currentRecordingId && (
+                <p className="text-xs text-gray-400 mt-4">
+                  You can close this page - we'll save your notes automatically
+                </p>
+              )}
             </div>
           )}
         </div>
@@ -334,7 +452,7 @@ export default function RecordPage() {
               <p className="text-sm font-semibold text-gray-900 mb-1">Clear audio</p>
               <p className="text-xs text-gray-600">Find a quiet space for best results</p>
             </div>
-            
+
             <div className="bg-white border border-gray-200 rounded-lg p-4 text-center">
               <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mx-auto mb-3">
                 <CheckCircle className="w-5 h-5 text-purple-600" />
@@ -342,7 +460,7 @@ export default function RecordPage() {
               <p className="text-sm font-semibold text-gray-900 mb-1">Automatic processing</p>
               <p className="text-xs text-gray-600">We'll generate your notes in minutes</p>
             </div>
-            
+
             <div className="bg-white border border-gray-200 rounded-lg p-4 text-center">
               <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-3">
                 <Upload className="w-5 h-5 text-green-600" />

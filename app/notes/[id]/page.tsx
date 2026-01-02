@@ -173,6 +173,20 @@ export default function NotePage() {
           </div>
         )}
 
+        {note.exam_tips && note.exam_tips.length > 0 && (
+          <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl p-6 mb-6">
+            <h2 className="text-lg font-bold text-gray-900 mb-4">Exam Tips</h2>
+            <ul className="space-y-2">
+              {note.exam_tips.map((tip: string, i: number) => (
+                <li key={i} className="flex items-start gap-2">
+                  <span className="text-green-600 mt-0.5">•</span>
+                  <span className="text-gray-700">{tip}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
         <div className="bg-white border border-gray-200 rounded-xl overflow-hidden mb-6">
           <div className="flex border-b border-gray-200">
             <button
@@ -249,16 +263,16 @@ export default function NotePage() {
 
             {activeTab === 'transcript' && (
               <div>
-                {note.transcript ? (
+                {note.transcription_text ? (
                   <div className="relative">
                     <button
-                      onClick={() => copyToClipboard(note.transcript, -1)}
+                      onClick={() => copyToClipboard(note.transcription_text, -1)}
                       className="absolute top-0 right-0 p-2 text-gray-500 hover:text-gray-700"
                     >
                       {copiedId === -1 ? <Check className="w-5 h-5 text-green-600" /> : <Copy className="w-5 h-5" />}
                     </button>
                     <div className="whitespace-pre-wrap text-gray-700 leading-relaxed bg-gray-50 p-4 rounded-lg">
-                      {note.transcript}
+                      {note.transcription_text}
                     </div>
                   </div>
                 ) : (

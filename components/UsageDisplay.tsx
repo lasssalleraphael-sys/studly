@@ -3,8 +3,8 @@ import { Mic, Clock, AlertCircle } from 'lucide-react'
 
 interface UsageDisplayProps {
   planName: string
-  lecturesUsed: number
-  lecturesLimit: number
+  lecturesUsed: number  // Now represents hours used
+  lecturesLimit: number // Now represents hours limit
 }
 
 const PLAN_LIMITS: Record<string, number> = {
@@ -14,12 +14,20 @@ const PLAN_LIMITS: Record<string, number> = {
   basic: 7,
 }
 
+function formatHours(hours: number): string {
+  if (hours < 1) {
+    const minutes = Math.round(hours * 60)
+    return `${minutes} min`
+  }
+  return `${hours.toFixed(1)} hrs`
+}
+
 export default function UsageDisplay({ planName, lecturesUsed, lecturesLimit }: UsageDisplayProps) {
   const limit = lecturesLimit || PLAN_LIMITS[planName.toLowerCase()] || 7
-  const used = lecturesUsed
+  const used = lecturesUsed || 0
   const remaining = Math.max(0, limit - used)
   const percentage = Math.min(100, (used / limit) * 100)
-  
+
   const now = new Date()
   const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1)
   const daysUntilReset = Math.ceil((nextMonth.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
@@ -46,7 +54,7 @@ export default function UsageDisplay({ planName, lecturesUsed, lecturesLimit }: 
       }
     }
     return {
-      message: remaining + ' recordings remaining',
+      message: `${formatHours(remaining)} remaining`,
       bgColor: 'bg-blue-50',
       borderColor: 'border-blue-100',
       textColor: 'text-blue-700',
@@ -77,8 +85,8 @@ export default function UsageDisplay({ planName, lecturesUsed, lecturesLimit }: 
       </div>
       <div className="mb-3">
         <div className="flex items-baseline gap-1">
-          <span className="text-3xl font-bold text-gray-900">{used}</span>
-          <span className="text-gray-500">/ {limit} recordings</span>
+          <span className="text-3xl font-bold text-gray-900">{formatHours(used)}</span>
+          <span className="text-gray-500">/ {limit} hours</span>
         </div>
         <p className={'text-sm ' + status.textColor + ' font-medium mt-1'}>{status.message}</p>
       </div>

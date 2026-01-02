@@ -25,27 +25,37 @@ export async function middleware(request: NextRequest) {
   const { data: { session } } = await supabase.auth.getSession()
   const pathname = request.nextUrl.pathname
 
+  // Public routes - no auth required
   const publicRoutes = ['/', '/pricing']
   const isPublicRoute = publicRoutes.includes(pathname)
 
+  // Auth route handling
   if (pathname === '/auth') {
     if (session) {
-      const { data: subscription } = await supabase
-        .from('subscriptions')
-        .select('status')
-        .eq('user_id', session.user.id)
-        .in('status', ['active', 'trialing'])
-        .single()
+      try {
+        // If logged in, check subscription (active OR trialing)
+        const { data: subscription } = await supabase
+          .from('subscriptions')
+          .select('status')
+          .eq('user_id', session.user.id)
+          .in('status', ['active', 'trialing'])
+          .single()
 
-      if (subscription) {
-        return NextResponse.redirect(new URL('/dashboard', request.url))
-      } else {
+        if (subscription) {
+          return NextResponse.redirect(new URL('/dashboard', request.url))
+        } else {
+          return NextResponse.redirect(new URL('/pricing', request.url))
+        }
+      } catch (error) {
+        // If there's an error checking subscription, redirect to pricing
+        console.error('Middleware subscription check error:', error)
         return NextResponse.redirect(new URL('/pricing', request.url))
       }
     }
     return response
   }
 
+  // Protected routes
   const protectedRoutes = ['/dashboard', '/record', '/notes', '/settings']
   const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route))
 
@@ -54,14 +64,21 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL('/auth', request.url))
     }
 
-    const { data: subscription } = await supabase
-      .from('subscriptions')
-      .select('status')
-      .eq('user_id', session.user.id)
-      .in('status', ['active', 'trialing'])
-      .single()
+    try {
+      // Check subscription (active OR trialing)
+      const { data: subscription } = await supabase
+        .from('subscriptions')
+        .select('status')
+        .eq('user_id', session.user.id)
+        .in('status', ['active', 'trialing'])
+        .single()
 
-    if (!subscription) {
+      if (!subscription) {
+        return NextResponse.redirect(new URL('/pricing', request.url))
+      }
+    } catch (error) {
+      // If there's an error checking subscription, redirect to pricing
+      console.error('Middleware subscription check error:', error)
       return NextResponse.redirect(new URL('/pricing', request.url))
     }
   }

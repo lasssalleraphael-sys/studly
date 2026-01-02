@@ -3,15 +3,19 @@ import { BookOpen, Menu, X, LogOut } from 'lucide-react'
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
-import { useRouter, usePathname } from 'next/navigation'
+import { useRouter } from 'next/navigation'
+import { Session } from '@supabase/supabase-js'
 
-export default function NavBar() {
+interface NavBarProps {
+  session?: Session | null
+}
+
+export default function NavBar({ session: initialSession }: NavBarProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [isScrolled, setIsScrolled] = useState(false)
-  const [user, setUser] = useState<any>(null)
-  const [isLoading, setIsLoading] = useState(true)
+  const [user, setUser] = useState<any>(initialSession?.user || null)
+  const [mounted, setMounted] = useState(false)
   const router = useRouter()
-  const pathname = usePathname()
 
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -19,6 +23,8 @@ export default function NavBar() {
   )
 
   useEffect(() => {
+    setMounted(true)
+    
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 10)
     }
@@ -26,14 +32,21 @@ export default function NavBar() {
     const getUser = async () => {
       const { data: { session } } = await supabase.auth.getSession()
       setUser(session?.user || null)
-      setIsLoading(false)
     }
 
     window.addEventListener('scroll', handleScroll)
     getUser()
 
-    return () => window.removeEventListener('scroll', handleScroll)
-  }, [])
+    // Listen for auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user || null)
+    })
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll)
+      subscription.unsubscribe()
+    }
+  }, [supabase.auth])
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
@@ -42,11 +55,8 @@ export default function NavBar() {
     router.refresh()
   }
 
-  // Determine if we're on a public page (landing, pricing preview, auth)
-  const isPublicPage = pathname === '/' || pathname === '/auth'
-  
-  // Show logged-in nav only if user exists AND we're not on a public page
-  const showLoggedInNav = user && !isPublicPage
+  // Prevent hydration mismatch by not rendering user-specific content until mounted
+  const showUserContent = mounted ? user : null
 
   return (
     <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-200 ${
@@ -66,7 +76,7 @@ export default function NavBar() {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-8">
-            {!showLoggedInNav ? (
+            {!showUserContent ? (
               <>
                 <Link 
                   href="/#how-it-works" 
@@ -75,7 +85,7 @@ export default function NavBar() {
                   How it works
                 </Link>
                 <Link 
-                  href="/#pricing" 
+                  href="/pricing" 
                   className="text-gray-700 hover:text-gray-900 font-medium transition-colors text-sm"
                 >
                   Pricing
@@ -84,7 +94,7 @@ export default function NavBar() {
                   href="/auth" 
                   className="px-5 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors text-sm"
                 >
-                  Open app
+                  Get started
                 </Link>
               </>
             ) : (
@@ -137,7 +147,7 @@ export default function NavBar() {
         {isOpen && (
           <div className="md:hidden border-t border-gray-200 py-4 bg-white">
             <div className="flex flex-col gap-1">
-              {!showLoggedInNav ? (
+              {!showUserContent ? (
                 <>
                   <Link 
                     href="/#how-it-works" 
@@ -147,7 +157,7 @@ export default function NavBar() {
                     How it works
                   </Link>
                   <Link 
-                    href="/#pricing" 
+                    href="/pricing" 
                     className="text-gray-700 hover:text-gray-900 hover:bg-gray-50 font-medium transition-colors px-4 py-2.5 rounded-lg text-sm"
                     onClick={() => setIsOpen(false)}
                   >
@@ -158,7 +168,7 @@ export default function NavBar() {
                     className="mt-2 mx-4 px-5 py-2.5 bg-blue-600 text-white font-semibold rounded-lg text-center hover:bg-blue-700 transition-colors text-sm"
                     onClick={() => setIsOpen(false)}
                   >
-                    Open app
+                    Get started
                   </Link>
                 </>
               ) : (

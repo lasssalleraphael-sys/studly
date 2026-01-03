@@ -1,14 +1,18 @@
 'use client'
-import { useState, useRef, useEffect, useCallback } from 'react'
+
+export const dynamic = 'force-dynamic'
+
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
-import { Mic, Square, Upload, CheckCircle, AlertCircle, ArrowLeft, Loader } from 'lucide-react'
+import { Mic, Square, Upload, CheckCircle, AlertCircle, ArrowLeft, Loader, AudioLines, BookOpen } from 'lucide-react'
 import Link from 'next/link'
+import DashboardLayout from '@/components/DashboardLayout'
 
 const PLAN_LIMITS: Record<string, number> = {
-  starter: 7,
-  pro: 18,
-  elite: 37,
-  basic: 7,
+  starter: 5,
+  pro: 15,
+  elite: 30,
+  basic: 5,
 }
 
 const SUBJECTS = [
@@ -47,7 +51,7 @@ export default function RecordPage() {
   const [currentRecordingId, setCurrentRecordingId] = useState<string | null>(null)
 
   const [hoursUsed, setHoursUsed] = useState(0)
-  const [hoursLimit, setHoursLimit] = useState(7)
+  const [hoursLimit, setHoursLimit] = useState(5)
   const [planName, setPlanName] = useState('starter')
   const [checkingUsage, setCheckingUsage] = useState(true)
 
@@ -56,10 +60,13 @@ export default function RecordPage() {
   const timerInterval = useRef<NodeJS.Timeout | null>(null)
   const pollingInterval = useRef<NodeJS.Timeout | null>(null)
 
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  )
+  const supabase = useMemo(() => {
+    if (typeof window === 'undefined') return null
+    return createBrowserClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    )
+  }, [])
 
   const pollProcessingStatus = useCallback(async (recordingId: string) => {
     try {
@@ -87,13 +94,13 @@ export default function RecordPage() {
         return
       }
 
-      // Update step message
+      // Update step message with premium copy
       if (data.step === 'transcription') {
-        setProcessingStep('Transcribing audio...')
+        setProcessingStep('Transcribing your lecture...')
       } else if (data.step === 'note_generation') {
-        setProcessingStep('Generating study notes...')
+        setProcessingStep('AI is generating your study notes...')
       } else {
-        setProcessingStep('Processing...')
+        setProcessingStep('Processing your recording...')
       }
     } catch (err) {
       console.error('Polling error:', err)
@@ -101,6 +108,7 @@ export default function RecordPage() {
   }, [])
 
   useEffect(() => {
+    if (!supabase) return
     const checkUsage = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession()
@@ -116,7 +124,7 @@ export default function RecordPage() {
           .single()
 
         const userPlanName = sub?.plan_name || 'starter'
-        const userHoursLimit = sub?.monthly_hours_limit || PLAN_LIMITS[userPlanName.toLowerCase()] || 7
+        const userHoursLimit = sub?.monthly_hours_limit || PLAN_LIMITS[userPlanName.toLowerCase()] || 5
         const userHoursUsed = sub?.hours_used || 0
 
         setPlanName(userPlanName)
@@ -139,7 +147,7 @@ export default function RecordPage() {
         clearInterval(pollingInterval.current)
       }
     }
-  }, [])
+  }, [supabase])
 
   const isAtLimit = hoursUsed >= hoursLimit
   const remainingHours = Math.max(0, hoursLimit - hoursUsed)
@@ -202,11 +210,16 @@ export default function RecordPage() {
       }
 
       setIsProcessing(true)
-      setProcessingStep('Uploading recording...')
+      setProcessingStep('Uploading your recording...')
     }
   }
 
   const uploadAndProcess = async (audioBlob: Blob) => {
+    if (!supabase) {
+      setError('Application not ready. Please refresh.')
+      setIsProcessing(false)
+      return
+    }
     try {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) {
@@ -278,41 +291,44 @@ export default function RecordPage() {
 
   if (checkingUsage) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white pt-24 pb-12 px-6 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">Checking usage...</p>
+      <DashboardLayout>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="text-center">
+            <div className="w-8 h-8 border-2 border-violet-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+            <p className="text-slate-400">Checking usage...</p>
+          </div>
         </div>
-      </div>
+      </DashboardLayout>
     )
   }
 
   if (isAtLimit && !isRecording && !isProcessing) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white pt-24 pb-12 px-6">
-        <div className="max-w-2xl mx-auto text-center">
-          <div className="bg-white border border-red-200 rounded-2xl p-12 shadow-sm">
-            <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
-              <AlertCircle className="w-10 h-10 text-red-600" />
+      <DashboardLayout>
+        <div className="max-w-2xl mx-auto">
+          <div className="glass-card p-12 text-center border-red-500/20 bg-red-500/5">
+            <div className="w-20 h-20 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
+              <AlertCircle className="w-10 h-10 text-red-400" />
             </div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-3">Monthly limit reached</h1>
-            <p className="text-gray-600 mb-2">
-              You've used all <strong>{formatHours(hoursLimit)}</strong> included in your <span className="capitalize">{planName}</span> plan this month.
+            <h1 className="text-3xl font-bold text-white mb-3">Monthly limit reached</h1>
+            <p className="text-slate-400 mb-2">
+              You've used all <strong className="text-white">{formatHours(hoursLimit)}</strong> included in your{' '}
+              <span className="capitalize text-violet-400">{planName}</span> plan this month.
             </p>
-            <p className="text-gray-500 text-sm mb-8">
+            <p className="text-slate-500 text-sm mb-8">
               Your limit resets on the 1st of next month.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
                 href="/pricing"
-                className="px-8 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors"
+                className="btn-primary"
               >
                 Upgrade plan
               </Link>
               <Link
                 href="/dashboard"
-                className="px-8 py-3 bg-gray-100 text-gray-900 font-semibold rounded-lg hover:bg-gray-200 transition-colors flex items-center justify-center gap-2"
+                className="px-8 py-3 bg-slate-700 text-white font-semibold rounded-xl hover:bg-slate-600 transition-colors flex items-center justify-center gap-2"
               >
                 <ArrowLeft className="w-4 h-4" />
                 Back to dashboard
@@ -320,34 +336,39 @@ export default function RecordPage() {
             </div>
           </div>
         </div>
-      </div>
+      </DashboardLayout>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white pt-24 pb-12 px-6">
-      <div className="max-w-2xl mx-auto">
+    <DashboardLayout>
+      <div className="max-w-2xl mx-auto fade-in">
+        {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-3">Record your lecture</h1>
-          <p className="text-gray-600">
+          <h1 className="text-4xl font-bold text-white mb-3">
+            Record your <span className="text-gradient">lecture</span>
+          </h1>
+          <p className="text-slate-400">
             Click the button below to start recording. We'll handle the rest.
           </p>
-          <p className="text-sm text-blue-600 mt-2 font-medium">
+          <p className="text-sm text-violet-400 mt-2 font-medium">
             {formatHours(remainingHours)} remaining this month
           </p>
         </div>
 
+        {/* Error Message */}
         {error && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
-            <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-            <p className="text-sm text-red-800">{error}</p>
+          <div className="mb-6 p-4 glass-card border-red-500/30 bg-red-500/10 flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+            <p className="text-sm text-red-300">{error}</p>
           </div>
         )}
 
+        {/* Form Fields */}
         {!isRecording && !isProcessing && (
           <div className="space-y-4 mb-6">
             <div>
-              <label htmlFor="title" className="block text-sm font-semibold text-gray-900 mb-2">
+              <label htmlFor="title" className="block text-sm font-semibold text-slate-300 mb-2">
                 Recording title (optional)
               </label>
               <input
@@ -356,39 +377,39 @@ export default function RecordPage() {
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="e.g., Biology Lecture - Chapter 3"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent outline-none transition-all"
+                className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700/50 rounded-xl text-white placeholder-slate-500 focus:ring-2 focus:ring-violet-500 focus:border-transparent outline-none transition-all"
               />
             </div>
 
             <div className="grid md:grid-cols-2 gap-4">
               <div>
-                <label htmlFor="subject" className="block text-sm font-semibold text-gray-900 mb-2">
+                <label htmlFor="subject" className="block text-sm font-semibold text-slate-300 mb-2">
                   Subject
                 </label>
                 <select
                   id="subject"
                   value={subject}
                   onChange={(e) => setSubject(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent outline-none transition-all bg-white"
+                  className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700/50 rounded-xl text-white focus:ring-2 focus:ring-violet-500 focus:border-transparent outline-none transition-all appearance-none cursor-pointer"
                 >
                   {SUBJECTS.map((s) => (
-                    <option key={s.value} value={s.value}>{s.label}</option>
+                    <option key={s.value} value={s.value} className="bg-slate-800">{s.label}</option>
                   ))}
                 </select>
               </div>
 
               <div>
-                <label htmlFor="examBoard" className="block text-sm font-semibold text-gray-900 mb-2">
+                <label htmlFor="examBoard" className="block text-sm font-semibold text-slate-300 mb-2">
                   Exam Board
                 </label>
                 <select
                   id="examBoard"
                   value={examBoard}
                   onChange={(e) => setExamBoard(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent outline-none transition-all bg-white"
+                  className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700/50 rounded-xl text-white focus:ring-2 focus:ring-violet-500 focus:border-transparent outline-none transition-all appearance-none cursor-pointer"
                 >
                   {EXAM_BOARDS.map((e) => (
-                    <option key={e.value} value={e.value}>{e.label}</option>
+                    <option key={e.value} value={e.value} className="bg-slate-800">{e.label}</option>
                   ))}
                 </select>
               </div>
@@ -396,30 +417,42 @@ export default function RecordPage() {
           </div>
         )}
 
-        <div className="bg-white border border-gray-200 rounded-2xl p-12 text-center shadow-sm">
+        {/* Recording Card */}
+        <div className="glass-card p-12 text-center">
+          {/* Ready State */}
           {!isRecording && !isProcessing && (
             <div>
               <button
                 onClick={startRecording}
-                className="w-32 h-32 bg-red-500 rounded-full hover:bg-red-600 transition-all shadow-lg hover:shadow-xl mx-auto mb-6 flex items-center justify-center group"
+                className="w-32 h-32 bg-gradient-to-br from-red-500 to-rose-600 rounded-full hover:from-red-600 hover:to-rose-700 transition-all shadow-lg shadow-red-500/30 hover:shadow-xl hover:shadow-red-500/40 mx-auto mb-6 flex items-center justify-center group"
               >
                 <Mic className="w-14 h-14 text-white group-hover:scale-110 transition-transform" strokeWidth={2} />
               </button>
-              <p className="text-lg font-semibold text-gray-900 mb-2">Ready to record</p>
-              <p className="text-sm text-gray-600">Click the button to start</p>
+              <p className="text-lg font-semibold text-white mb-2">Ready to record</p>
+              <p className="text-sm text-slate-400">Click the button to start</p>
             </div>
           )}
 
+          {/* Recording State */}
           {isRecording && (
             <div>
-              <div className="w-32 h-32 bg-red-500 rounded-full animate-pulse mx-auto mb-6 flex items-center justify-center">
-                <Mic className="w-14 h-14 text-white" strokeWidth={2} />
+              <div className="relative w-32 h-32 mx-auto mb-6">
+                {/* Pulse rings */}
+                <div className="absolute inset-0 bg-red-500/20 rounded-full animate-ping" />
+                <div className="absolute inset-2 bg-red-500/30 rounded-full animate-pulse" />
+                {/* Main button */}
+                <div className="absolute inset-0 bg-gradient-to-br from-red-500 to-rose-600 rounded-full flex items-center justify-center">
+                  <Mic className="w-14 h-14 text-white" strokeWidth={2} />
+                </div>
               </div>
-              <p className="text-3xl font-bold text-gray-900 mb-2">{formatTime(recordingTime)}</p>
-              <p className="text-sm text-gray-600 mb-6">Recording in progress...</p>
+              <p className="text-4xl font-bold text-white mb-2 font-mono">{formatTime(recordingTime)}</p>
+              <p className="text-sm text-slate-400 mb-6 flex items-center justify-center gap-2">
+                <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+                Recording in progress...
+              </p>
               <button
                 onClick={stopRecording}
-                className="px-8 py-3 bg-gray-900 text-white font-semibold rounded-lg hover:bg-gray-800 transition-colors inline-flex items-center gap-2"
+                className="px-8 py-3 bg-slate-700 text-white font-semibold rounded-xl hover:bg-slate-600 transition-colors inline-flex items-center gap-2"
               >
                 <Square className="w-5 h-5" />
                 Stop recording
@@ -427,15 +460,55 @@ export default function RecordPage() {
             </div>
           )}
 
+          {/* Processing State */}
           {isProcessing && (
             <div>
-              <div className="w-32 h-32 bg-blue-100 rounded-full mx-auto mb-6 flex items-center justify-center">
-                <Loader className="w-14 h-14 text-blue-600 animate-spin" strokeWidth={2} />
+              <div className="w-32 h-32 bg-violet-500/20 rounded-full mx-auto mb-6 flex items-center justify-center relative">
+                <div className="absolute inset-0 border-4 border-violet-500/30 rounded-full" />
+                <div className="absolute inset-0 border-4 border-transparent border-t-violet-500 rounded-full animate-spin" />
+                <Loader className="w-14 h-14 text-violet-400" strokeWidth={2} />
               </div>
-              <p className="text-xl font-bold text-gray-900 mb-2">{processingStep || 'Processing...'}</p>
-              <p className="text-sm text-gray-600">This usually takes 1-2 minutes</p>
+              <p className="text-xl font-bold text-white mb-2">{processingStep || 'Processing...'}</p>
+              <p className="text-sm text-slate-400">This usually takes 1-2 minutes</p>
+
+              {/* Progress Steps */}
+              <div className="mt-8 space-y-3 text-left max-w-xs mx-auto">
+                <div className={`flex items-center gap-3 ${processingStep.includes('Upload') ? 'text-violet-400' : 'text-slate-500'}`}>
+                  <div className={`w-6 h-6 rounded-full flex items-center justify-center ${processingStep.includes('Upload') ? 'bg-violet-500/20' : 'bg-slate-700'}`}>
+                    {processingStep.includes('Transcrib') || processingStep.includes('AI') ? (
+                      <CheckCircle className="w-4 h-4 text-emerald-400" />
+                    ) : (
+                      <Upload className="w-3 h-3" />
+                    )}
+                  </div>
+                  <span className="text-sm">Uploading recording</span>
+                </div>
+                <div className={`flex items-center gap-3 ${processingStep.includes('Transcrib') ? 'text-violet-400' : 'text-slate-500'}`}>
+                  <div className={`w-6 h-6 rounded-full flex items-center justify-center ${processingStep.includes('Transcrib') ? 'bg-violet-500/20' : 'bg-slate-700'}`}>
+                    {processingStep.includes('AI') ? (
+                      <CheckCircle className="w-4 h-4 text-emerald-400" />
+                    ) : processingStep.includes('Transcrib') ? (
+                      <Loader className="w-3 h-3 animate-spin" />
+                    ) : (
+                      <AudioLines className="w-3 h-3" />
+                    )}
+                  </div>
+                  <span className="text-sm">Transcribing audio</span>
+                </div>
+                <div className={`flex items-center gap-3 ${processingStep.includes('AI') ? 'text-violet-400' : 'text-slate-500'}`}>
+                  <div className={`w-6 h-6 rounded-full flex items-center justify-center ${processingStep.includes('AI') ? 'bg-violet-500/20' : 'bg-slate-700'}`}>
+                    {processingStep.includes('AI') ? (
+                      <Loader className="w-3 h-3 animate-spin" />
+                    ) : (
+                      <BookOpen className="w-3 h-3" />
+                    )}
+                  </div>
+                  <span className="text-sm">Generating study notes</span>
+                </div>
+              </div>
+
               {currentRecordingId && (
-                <p className="text-xs text-gray-400 mt-4">
+                <p className="text-xs text-slate-500 mt-6">
                   You can close this page - we'll save your notes automatically
                 </p>
               )}
@@ -443,34 +516,35 @@ export default function RecordPage() {
           )}
         </div>
 
+        {/* Tips */}
         {!isRecording && !isProcessing && (
           <div className="mt-8 grid md:grid-cols-3 gap-4">
-            <div className="bg-white border border-gray-200 rounded-lg p-4 text-center">
-              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-3">
-                <Mic className="w-5 h-5 text-blue-600" />
+            <div className="glass-card p-4 text-center">
+              <div className="w-10 h-10 bg-violet-500/20 rounded-lg flex items-center justify-center mx-auto mb-3">
+                <Mic className="w-5 h-5 text-violet-400" />
               </div>
-              <p className="text-sm font-semibold text-gray-900 mb-1">Clear audio</p>
-              <p className="text-xs text-gray-600">Find a quiet space for best results</p>
+              <p className="text-sm font-semibold text-white mb-1">Clear audio</p>
+              <p className="text-xs text-slate-400">Find a quiet space for best results</p>
             </div>
 
-            <div className="bg-white border border-gray-200 rounded-lg p-4 text-center">
-              <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mx-auto mb-3">
-                <CheckCircle className="w-5 h-5 text-purple-600" />
+            <div className="glass-card p-4 text-center">
+              <div className="w-10 h-10 bg-fuchsia-500/20 rounded-lg flex items-center justify-center mx-auto mb-3">
+                <CheckCircle className="w-5 h-5 text-fuchsia-400" />
               </div>
-              <p className="text-sm font-semibold text-gray-900 mb-1">Automatic processing</p>
-              <p className="text-xs text-gray-600">We'll generate your notes in minutes</p>
+              <p className="text-sm font-semibold text-white mb-1">Automatic processing</p>
+              <p className="text-xs text-slate-400">We'll generate your notes in minutes</p>
             </div>
 
-            <div className="bg-white border border-gray-200 rounded-lg p-4 text-center">
-              <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-3">
-                <Upload className="w-5 h-5 text-green-600" />
+            <div className="glass-card p-4 text-center">
+              <div className="w-10 h-10 bg-emerald-500/20 rounded-lg flex items-center justify-center mx-auto mb-3">
+                <Upload className="w-5 h-5 text-emerald-400" />
               </div>
-              <p className="text-sm font-semibold text-gray-900 mb-1">Instant access</p>
-              <p className="text-xs text-gray-600">Find your notes in the dashboard</p>
+              <p className="text-sm font-semibold text-white mb-1">Instant access</p>
+              <p className="text-xs text-slate-400">Find your notes in the dashboard</p>
             </div>
           </div>
         )}
       </div>
-    </div>
+    </DashboardLayout>
   )
 }

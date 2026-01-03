@@ -1,9 +1,14 @@
 'use client'
-import { useEffect, useState } from 'react'
+
+export const dynamic = 'force-dynamic'
+
+import { useEffect, useState, useMemo } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
-import { FileText, Clock, CheckCircle, Loader, Search } from 'lucide-react'
+import { FileText, Clock, Search, Mic, Play } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import DashboardLayout from '@/components/DashboardLayout'
+import { SkeletonNotes } from '@/components/Skeleton'
 
 export default function NotesPage() {
   const [notes, setNotes] = useState<any[]>([])
@@ -12,12 +17,16 @@ export default function NotesPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const router = useRouter()
 
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  )
+  const supabase = useMemo(() => {
+    if (typeof window === 'undefined') return null
+    return createBrowserClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    )
+  }, [])
 
   useEffect(() => {
+    if (!supabase) return
     const loadNotes = async () => {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) {
@@ -42,57 +51,70 @@ export default function NotesPage() {
       setLoading(false)
     }
     loadNotes()
-  }, [])
+  }, [supabase, router])
 
   const filteredRecordings = recordings.filter(rec =>
-    rec.title?.toLowerCase().includes(searchTerm.toLowerCase())
+    rec.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    rec.subject?.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <Loader className="w-8 h-8 text-blue-600 animate-spin" />
-      </div>
+      <DashboardLayout>
+        <div className="space-y-6 fade-in">
+          <div className="flex items-center justify-between">
+            <div className="skeleton h-10 w-40 rounded" />
+            <div className="skeleton h-12 w-36 rounded-xl" />
+          </div>
+          <div className="skeleton h-12 w-full rounded-xl" />
+          <SkeletonNotes />
+        </div>
+      </DashboardLayout>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-24 pb-12 px-6">
-      <div className="max-w-6xl mx-auto">
-        <div className="flex items-center justify-between mb-8">
-          <h1 className="text-4xl font-bold text-gray-900">My Notes</h1>
+    <DashboardLayout>
+      <div className="space-y-6 fade-in">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <h1 className="text-4xl font-bold text-white">
+            My <span className="text-gradient">Notes</span>
+          </h1>
           <Link
             href="/record"
-            className="px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors"
+            className="btn-primary inline-flex items-center gap-2"
           >
+            <Mic className="w-5 h-5" />
             New Recording
           </Link>
         </div>
 
         {/* Search Bar */}
-        <div className="mb-6">
-          <div className="relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search notes..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent outline-none"
-            />
-          </div>
+        <div className="relative">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+          <input
+            type="text"
+            placeholder="Search notes..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-12 pr-4 py-3 bg-slate-800/50 border border-slate-700/50 rounded-xl text-white placeholder-slate-400 focus:ring-2 focus:ring-violet-500 focus:border-transparent outline-none transition-all"
+          />
         </div>
 
         {/* Notes List */}
         {filteredRecordings.length === 0 ? (
-          <div className="bg-white border border-gray-200 rounded-xl p-12 text-center">
-            <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-xl font-bold text-gray-900 mb-2">No recordings yet</h3>
-            <p className="text-gray-600 mb-6">Start by recording your first lecture</p>
+          <div className="glass-card p-12 text-center">
+            <div className="w-16 h-16 bg-slate-700/50 rounded-full flex items-center justify-center mx-auto mb-4">
+              <FileText className="w-8 h-8 text-slate-500" />
+            </div>
+            <h3 className="text-xl font-bold text-white mb-2">No recordings yet</h3>
+            <p className="text-slate-400 mb-6">Start by recording your first lecture</p>
             <Link
               href="/record"
-              className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors"
+              className="btn-primary inline-flex items-center gap-2"
             >
+              <Mic className="w-5 h-5" />
               Record Now
             </Link>
           </div>
@@ -100,33 +122,41 @@ export default function NotesPage() {
           <div className="space-y-4">
             {filteredRecordings.map((recording) => {
               const note = notes.find(n => n.recording_id === recording.id)
-              
+
               return (
                 <div
                   key={recording.id}
-                  className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-md transition-all"
+                  className="glass-card p-6 hover:border-violet-500/30 transition-all group"
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
-                        <FileText className="w-5 h-5 text-blue-600" />
-                        <h3 className="text-xl font-bold text-gray-900">
+                        <div className="w-10 h-10 bg-violet-500/20 rounded-lg flex items-center justify-center">
+                          <FileText className="w-5 h-5 text-violet-400" />
+                        </div>
+                        <h3 className="text-xl font-bold text-white group-hover:text-violet-300 transition-colors">
                           {recording.title || 'Untitled Recording'}
                         </h3>
                       </div>
-                      
-                      <div className="flex items-center gap-4 text-sm text-gray-600 mb-3">
-                        <span className="flex items-center gap-1">
+
+                      <div className="flex items-center gap-4 text-sm text-slate-400 mb-3 ml-13">
+                        <span className="flex items-center gap-1.5">
                           <Clock className="w-4 h-4" />
                           {new Date(recording.created_at).toLocaleDateString()}
                         </span>
                         {recording.duration && (
                           <span>{Math.round(recording.duration / 60)} min</span>
                         )}
+                        {recording.subject && (
+                          <span className="text-violet-400">{recording.subject}</span>
+                        )}
+                        {recording.exam_board && (
+                          <span className="text-fuchsia-400">{recording.exam_board}</span>
+                        )}
                       </div>
 
-                      {note && (
-                        <p className="text-gray-700 line-clamp-2 mb-3">
+                      {note && note.summary && (
+                        <p className="text-slate-400 line-clamp-2 ml-13">
                           {note.summary}
                         </p>
                       )}
@@ -134,22 +164,29 @@ export default function NotesPage() {
 
                     <div className="flex items-center gap-3">
                       <span className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap ${
-                        recording.status === 'completed' 
-                          ? 'bg-green-100 text-green-700'
+                        recording.status === 'completed'
+                          ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
                           : recording.status === 'processing'
-                          ? 'bg-orange-100 text-orange-700'
+                          ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30 animate-pulse'
                           : recording.status === 'failed'
-                          ? 'bg-red-100 text-red-700'
-                          : 'bg-gray-100 text-gray-700'
+                          ? 'bg-red-500/20 text-red-400 border border-red-500/30'
+                          : 'bg-slate-500/20 text-slate-400 border border-slate-500/30'
                       }`}>
-                        {recording.status}
+                        {recording.status === 'processing' && (
+                          <span className="inline-flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 bg-amber-400 rounded-full animate-pulse" />
+                            Processing
+                          </span>
+                        )}
+                        {recording.status !== 'processing' && recording.status}
                       </span>
 
                       {recording.status === 'completed' && note && (
                         <Link
                           href={`/notes/${recording.id}`}
-                          className="px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition-colors"
+                          className="btn-primary text-sm py-2 px-4 inline-flex items-center gap-2"
                         >
+                          <Play className="w-4 h-4" />
                           View Notes
                         </Link>
                       )}
@@ -161,6 +198,6 @@ export default function NotesPage() {
           </div>
         )}
       </div>
-    </div>
+    </DashboardLayout>
   )
 }

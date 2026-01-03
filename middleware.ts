@@ -2,7 +2,17 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 export async function middleware(request: NextRequest) {
-  let response = NextResponse.next()
+  const response = NextResponse.next()
+  const pathname = request.nextUrl.pathname
+
+  // Skip middleware for static assets and API routes (except auth-related)
+  if (
+    pathname.startsWith('/_next') ||
+    pathname.startsWith('/api/') ||
+    pathname.includes('.') // static files
+  ) {
+    return response
+  }
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -12,45 +22,37 @@ export async function middleware(request: NextRequest) {
         get(name: string) {
           return request.cookies.get(name)?.value
         },
-        set(name: string, value: string, options: any) {
+        set(name: string, value: string, options: Record<string, unknown>) {
           response.cookies.set({ name, value, ...options })
         },
-        remove(name: string, options: any) {
+        remove(name: string, options: Record<string, unknown>) {
           response.cookies.set({ name, value: '', ...options })
         },
       },
     }
   )
 
-  const { data: { session } } = await supabase.auth.getSession()
-  const pathname = request.nextUrl.pathname
+  // Fast session check - getUser is faster than getSession for auth state
+  const { data: { user } } = await supabase.auth.getUser()
 
   // Public routes - no auth required
-  const publicRoutes = ['/', '/pricing']
+  const publicRoutes = ['/', '/pricing', '/auth']
   const isPublicRoute = publicRoutes.includes(pathname)
 
-  // Auth route handling
+  // Handle auth route
   if (pathname === '/auth') {
-    if (session) {
-      try {
-        // If logged in, check subscription (active OR trialing)
-        const { data: subscription } = await supabase
-          .from('subscriptions')
-          .select('status')
-          .eq('user_id', session.user.id)
-          .in('status', ['active', 'trialing'])
-          .single()
+    if (user) {
+      // Quick check for subscription using single optimized query
+      const { data: subscription } = await supabase
+        .from('subscriptions')
+        .select('status')
+        .eq('user_id', user.id)
+        .in('status', ['active', 'trialing'])
+        .maybeSingle()
 
-        if (subscription) {
-          return NextResponse.redirect(new URL('/dashboard', request.url))
-        } else {
-          return NextResponse.redirect(new URL('/pricing', request.url))
-        }
-      } catch (error) {
-        // If there's an error checking subscription, redirect to pricing
-        console.error('Middleware subscription check error:', error)
-        return NextResponse.redirect(new URL('/pricing', request.url))
-      }
+      return NextResponse.redirect(
+        new URL(subscription ? '/dashboard' : '/pricing', request.url)
+      )
     }
     return response
   }
@@ -60,25 +62,19 @@ export async function middleware(request: NextRequest) {
   const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route))
 
   if (isProtectedRoute) {
-    if (!session) {
+    if (!user) {
       return NextResponse.redirect(new URL('/auth', request.url))
     }
 
-    try {
-      // Check subscription (active OR trialing)
-      const { data: subscription } = await supabase
-        .from('subscriptions')
-        .select('status')
-        .eq('user_id', session.user.id)
-        .in('status', ['active', 'trialing'])
-        .single()
+    // Optimized single query for subscription check
+    const { data: subscription } = await supabase
+      .from('subscriptions')
+      .select('status')
+      .eq('user_id', user.id)
+      .in('status', ['active', 'trialing'])
+      .maybeSingle()
 
-      if (!subscription) {
-        return NextResponse.redirect(new URL('/pricing', request.url))
-      }
-    } catch (error) {
-      // If there's an error checking subscription, redirect to pricing
-      console.error('Middleware subscription check error:', error)
+    if (!subscription) {
       return NextResponse.redirect(new URL('/pricing', request.url))
     }
   }
@@ -87,5 +83,7 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)'],
+  matcher: [
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)',
+  ],
 }
